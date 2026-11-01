@@ -1,0 +1,69 @@
+version: 2
+
+models:
+  - name: fact_campaign_performance_daily
+    description: >
+      The table the dashboard reads. Grain is one row per date, campaign and device. Stores
+      counts, not rates, because rates cannot be summed. Contract enforced, so a changed column or
+      type stops the build. A full rebuild, because it reads daily aggregates and must reflect every
+      metadata correction.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [event_date, campaign_key, device]
+    columns:
+      - name: event_day
+        data_type: int64
+        description: Event date as a UNIX_DATE day number. The partition column on the sandbox.
+      - name: event_date
+        data_type: date
+        description: Reporting date. Dashboard filter.
+      - name: campaign_key
+        data_type: string
+        description: Joins to dim_campaign.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_campaign')
+              field: campaign_key
+      - name: campaign_type
+        data_type: string
+        description: teaser or online_placement.
+      - name: campaign_ref
+        data_type: string
+        description: campaign_id for teasers, campaign_name for placements. Dashboard filter.
+      - name: campaign_name
+        data_type: string
+        description: Campaign name. Dashboard filter.
+      - name: brand
+        data_type: string
+        description: "DERIVED from the campaign name, or no_brand. Dashboard filter."
+      - name: device
+        data_type: string
+        description: mobile or desktop. Dashboard filter.
+      - name: target_gender
+        data_type: string
+        description: The audience a campaign was aimed at, not the viewer's gender. Dashboard filter.
+      - name: match_status
+        data_type: string
+        description: How this campaign matched a booking on this day.
+      - name: booked_lines
+        data_type: int64
+        description: Number of bookings covering this campaign on this day.
+      - name: benchmark_ctr
+        data_type: numeric
+        description: Expected CTR as a fraction. Empty, not zero, when no benchmark exists.
+      - name: impressions
+        data_type: int64
+        description: Impressions. Sum this.
+      - name: clicks
+        data_type: int64
+        description: Clicks. Sum this.
+      - name: unique_session_views
+        data_type: int64
+        description: Sessions with at least one impression. Kept until the impression definition is agreed.
+      - name: impressions_with_benchmark
+        data_type: int64
+        description: Impressions that have a benchmark. The denominator for benchmark CTR.
+      - name: expected_clicks
+        data_type: numeric
+        description: Impressions times benchmark_ctr. Benchmark CTR is sum(expected_clicks) / sum(impressions_with_benchmark).

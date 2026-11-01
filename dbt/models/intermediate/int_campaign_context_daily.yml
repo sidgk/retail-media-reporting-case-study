@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: int_campaign_context_daily
+    description: >
+      For each campaign on each day it was seen, its audience, benchmark and how it matched
+      a booking. Teasers match on campaign_id, placements on name plus date inside the campaign dates. Grain
+      is one row per date and campaign. A full rebuild, so it reflects every metadata correction.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [event_date, campaign_key]
+    columns:
+      - name: event_date
+        description: Reporting date.
+      - name: campaign_key
+        description: Hash of campaign_type and campaign_ref.
+      - name: target_gender
+        description: Audience the campaign aimed at. mixed means overlapping lines, unknown means no gender available.
+      - name: benchmark_ctr
+        description: Expected CTR as a fraction, weighted by reach across live lines. Empty when none exists.
+      - name: booked_lines
+        description: Number of bookings covering this campaign on this day.
+      - name: match_status
+        description: matched, matched_multiple_lines, outside_campaign_dates or not_in_source.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [matched, matched_multiple_lines, outside_campaign_dates, not_in_source]
+
+unit_tests:
+  - name: placement_needs_date_not_just_name
+    description: A reused name outside its campaign dates must not borrow a benchmark from another year.
+    model: int_campaign_context_daily
+    given:
+      - input: ref('int_campaign_events_daily')
+        rows:
+          - {event_date: "2025-06-07", campaign_key: k1, campaign_type: online_placement, campaign_ref: Reused Name}
+      - input: ref('prep_teasers_cms')
+        rows: []
+      - input: ref('prep_online_placements_salesforce')
+        rows:
+          - {placement_line_id: old, campaign_name: Reused Name, campaign_start: "2023-01-05", campaign_end: "2023-01-11", gender: male, reach: 100, benchmark_ctr: 0.01}
+    expect:
+      rows:
+        - {event_date: "2025-06-07", campaign_key: k1, target_gender: unknown, benchmark_ctr: null, booked_lines: 0, match_status: outside_campaign_dates}
+
+  - name: overlapping_lines_are_mixed_and_reach_weighted
+    description: Two live lines with different genders stay one row, and the larger line dominates the benchmark.
+    model: int_campaign_context_daily
+    given:
+      - input: ref('int_campaign_events_daily')
+        rows:
+          - {event_date: "2025-06-07", campaign_key: k1, campaign_type: online_placement, campaign_ref: Two Lines}
+      - input: ref('prep_teasers_cms')
+        rows: []
+      - input: ref('prep_online_placements_salesforce')
+        rows:
+          - {placement_line_id: a, campaign_name: Two Lines, campaign_start: "2025-06-05", campaign_end: "2025-06-11", gender: male, reach: 900, benchmark_ctr: 0.01}
+          - {placement_line_id: b, campaign_name: Two Lines, campaign_start: "2025-06-05", campaign_end: "2025-06-11", gender: female, reach: 100, benchmark_ctr: 0.02}
+    expect:
+      rows:
+        - {event_date: "2025-06-07", campaign_key: k1, target_gender: mixed, benchmark_ctr: 0.011, booked_lines: 2, match_status: matched_multiple_lines}

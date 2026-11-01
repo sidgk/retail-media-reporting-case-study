@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: prep_online_placements_salesforce
+    description: >
+      One row per booked line from the newest copy of the manually kept sheet. Source file
+      online_placements_salesforce.csv. Dates, numbers and percentages are typed, exact duplicates
+      are removed. One campaign name can have many lines.
+    data_tests:
+      - dbt_utils.expression_is_true:
+          expression: "campaign_end >= campaign_start"
+    columns:
+      - name: placement_line_id
+        description: Hash of all booking fields, because the sheet has no id.
+        data_tests: [unique, not_null]
+      - name: campaign_name
+        description: Campaign name. Reused across years, so join on name and date together.
+      - name: campaign_start
+        description: First booked day. A date format change in the sheet shows up here as a null.
+        data_tests: [not_null]
+      - name: campaign_end
+        description: Last booked day.
+        data_tests: [not_null]
+      - name: gender
+        description: Audience as typed, lowercased, with Babys corrected to babies. Empty when the sheet left it blank.
+        data_tests:
+          - accepted_values:
+              values: [female, male, unisex, girls, boys, kids, babies, "women, gen z"]
+      - name: country_cluster
+        description: Region as typed. Mixes clusters, country codes and digits 1 to 5 of unknown meaning.
+      - name: reach
+        description: "ASSUMPTION: booked impressions. To be confirmed with the Retail Media team."
+      - name: currency_cpm
+        description: Currency of the CPM.
+      - name: cpm
+        description: Price per 1,000 impressions. The meaning of 0 is unknown.
+      - name: benchmark_ctr
+        description: Expected CTR as a fraction, so 0.28% is stored as 0.0028.
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+      - name: benchmark_clicks
+        description: Kept for audit only. Often disagrees with reach times benchmark_ctr, so nothing uses it.
+      - name: dwh_load_time
+        description: When this row was loaded into the warehouse by the model run.

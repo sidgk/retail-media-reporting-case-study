@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: int_campaign_events_daily
+    description: >
+      Daily impressions and clicks per campaign and device. Grain is one row per date,
+      campaign and device. Campaign details are deliberately absent, so a sheet or CMS correction
+      never forces a rescan of events. Incremental.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [event_date, campaign_key, device]
+    columns:
+      - name: event_day
+        description: Event date as a UNIX_DATE day number. The partition column on the sandbox.
+      - name: event_date
+        description: Reporting date.
+      - name: campaign_key
+        description: Hash of campaign_type and campaign_ref.
+      - name: campaign_type
+        description: teaser or online_placement.
+      - name: campaign_ref
+        description: campaign_id for teasers, campaign_name for placements.
+      - name: campaign_name
+        description: Campaign name from tracking.
+      - name: device
+        description: mobile or desktop.
+      - name: impressions
+        description: Every impression event. Repeats in a session all count.
+      - name: clicks
+        description: Every click event.
+      - name: unique_session_views
+        description: Sessions with at least one impression. Kept until the impression definition is agreed.

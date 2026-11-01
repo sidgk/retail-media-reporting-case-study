@@ -1,0 +1,10 @@
+data/source/
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+orchestration/airflow_home/
+__pycache__/
+.DS_Store
+presentation/
+.env
+dbt/.user.yml

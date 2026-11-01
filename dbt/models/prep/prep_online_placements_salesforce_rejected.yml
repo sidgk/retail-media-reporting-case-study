@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: prep_online_placements_salesforce_rejected
+    description: >
+      Quarantine for sheet rows that hold data but cannot be used, so they never vanish
+      silently. The Retail Media team reviews these. Fully blank rows are not kept. All columns stay
+      text exactly as received.
+    columns:
+      - name: rejection_reason
+        description: Why the row was rejected.
+      - name: campaign_start
+        description: As received.
+      - name: campaign_end
+        description: As received.
+      - name: gender
+        description: As received.
+      - name: country_cluster
+        description: As received.
+      - name: reach
+        description: As received.
+      - name: currency_cpm
+        description: As received.
+      - name: cpm
+        description: As received.
+      - name: benchmark_ctr
+        description: As received.
+      - name: benchmark_clicks
+        description: As received.
+      - name: dwh_load_time
+        description: When this row was loaded into the warehouse by the model run.

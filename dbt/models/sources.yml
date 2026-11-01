@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Exact copies of what each source sent, all STRING, written by ingestion/load_raw.py.
+    schema: rtm_raw
+    tags: ["ingestion"]
+    config:
+      loaded_at_field: _loaded_at
+      freshness:
+        warn_after: {count: 26, period: hour}
+    tables:
+      - name: tracking_events
+        description: GA4 events, one partition per event day. Immutable once loaded (per the brief).
+      - name: teasers_cms
+        description: Full daily copy of the CMS. It deletes old campaigns, so these copies are the only history.
+      - name: online_placements_salesforce
+        description: Full daily copy of the manually maintained Salesforce sheet.

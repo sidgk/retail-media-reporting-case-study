@@ -1,0 +1,59 @@
+name: aboutyou_retail_media
+version: "1.0.0"
+config-version: 2
+profile: aboutyou_retail_media
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+analysis-paths: ["analyses"]
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Last event day to process. Airflow passes its logical date on every run.
+  run_date: "2025-06-08"
+  # GA4 can still add events to a daily table for 3 days, so every run rebuilds this window.
+  lookback_days: 3
+  # Oldest event day processed on a first build, so a new table can never scan all of history.
+  start_date: "2025-06-01"
+  # false: integer partitions on UNIX_DATE (required on a BigQuery sandbox).
+  # true:  native DATE partitions (production). Needs a project with billing enabled.
+  use_date_partitions: false
+  # Timezone of reporting dates. The CMS stores UTC.
+  reporting_timezone: "Europe/Berlin"
+  # Stays false, so --full-refresh cannot rescan event history by accident. Set true only for a
+  # deliberate rebuild: dbt build --full-refresh --vars '{allow_full_refresh: true}'
+  allow_full_refresh: false
+
+models:
+  aboutyou_retail_media:
+    +persist_docs:    # writes these descriptions into BigQuery, so they show in the console
+      relation: true
+      columns: true
+    prep:          # one model per source: dedupe, typecast, basic tests
+      +schema: rtm_prep
+      +materialized: table
+      +tags: ["prep", "daily"]
+    intermediate:  # shared business logic
+      +schema: rtm_int
+      +materialized: table
+      +tags: ["intermediate", "daily"]
+    marts:         # what the dashboard reads
+      +schema: rtm_marts
+      +materialized: table
+      +tags: ["marts", "daily"]
+      dim_campaign:
+        +tags: ["dim"]
+      fact_campaign_performance_daily:
+        +tags: ["fact"]
+
+seeds:
+  aboutyou_retail_media:
+    +schema: rtm_seeds
+    +tags: ["daily"]
+
+data_tests:
+  aboutyou_retail_media:
+    +store_failures: true   # failing rows are kept in a table so someone can act on them
+    +schema: rtm_audit

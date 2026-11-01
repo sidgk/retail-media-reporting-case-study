@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: dim_campaign
+    description: >
+      The master list of campaigns from every source. Grain is one row per campaign. Any new
+      source must supply these same columns.
+    columns:
+      - name: campaign_key
+        description: Hash of campaign_type and the campaign's id or name. Joins to the fact.
+        data_tests: [unique, not_null]
+      - name: campaign_type
+        description: teaser or online_placement.
+      - name: source_system
+        description: cms, salesforce, or tracking when the source has not caught up yet.
+      - name: source_campaign_id
+        description: campaign_id for teasers. Empty for placements, which have no id.
+      - name: campaign_name
+        description: Campaign name.
+      - name: first_active_date
+        description: Teaser start date, or the placement's earliest campaign start.
+      - name: last_active_date
+        description: Teaser end date, or the placement's latest campaign end. Empty for open-ended teasers.
+      - name: is_open_ended
+        description: True for a teaser with no end date.
+      - name: is_inferred
+        description: True when events exist but the source has no record of the campaign yet.
+      - name: brand
+        description: "DERIVED: first word of the name if it is on brand_list, otherwise no_brand."

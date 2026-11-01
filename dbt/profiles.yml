@@ -1,0 +1,15 @@
+# Lives in the project on purpose: dbt finds it when run from this folder, so the
+# circus_group profile in ~/.dbt stays untouched. oauth uses your gcloud login, no keys here.
+aboutyou_retail_media:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT') }}"
+      dataset: rtm_dev
+      location: EU
+      threads: 4
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+      priority: interactive

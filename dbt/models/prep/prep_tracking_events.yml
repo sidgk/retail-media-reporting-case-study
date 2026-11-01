@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: prep_tracking_events
+    description: >
+      Every ad impression and click from GA4, typed and deduplicated, with only the columns
+      reporting needs. Source file tracking_events.csv. Grain is one row per event. Incremental,
+      partitioned by event day, and protected from an accidental full refresh.
+    columns:
+      - name: event_day
+        description: Event date as a UNIX_DATE day number. The partition column on the sandbox.
+      - name: event_date
+        description: Reporting date of the event.
+        data_tests: [not_null]
+      - name: event_timestamp
+        description: Date and time of the event, as written in the file. A failed parse shows up as a null.
+      - name: session_id
+        description: One visit.
+      - name: visitor_id
+        description: One device, not one person.
+      - name: device
+        description: mobile or desktop.
+        data_tests:
+          - accepted_values:
+              values: [mobile, desktop]
+      - name: event_type
+        description: impression means the ad was shown. click means it was tapped.
+        data_tests:
+          - accepted_values:
+              values: [impression, click]
+      - name: campaign_type
+        description: A new campaign type fails this test on purpose, so it gets added deliberately.
+        data_tests:
+          - accepted_values:
+              values: [teaser, online_placement]
+      - name: campaign_id
+        description: Teaser id from the CMS. Always empty for online placements.
+      - name: campaign_name
+        description: Campaign name. The only link from a placement to its Salesforce booking.
+        data_tests: [not_null]
+      - name: event_id
+        description: Hash of all identifying fields, because GA4 has no event id. Used to remove duplicates.
+        data_tests: [unique, not_null]
+      - name: dwh_load_time
+        description: When this row was loaded into the warehouse by the model run.

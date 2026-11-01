@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: prep_teasers_cms
+    description: >
+      Teasers from the CMS, typed and deduplicated. Source file teasers_cms.csv. Grain is one
+      row per campaign_id, keeping the newest daily copy. The CMS hard-deletes deactivated campaigns,
+      so a campaign missing from the newest copy keeps its last known row here.
+    columns:
+      - name: campaign_id
+        description: Teaser id, a reliable key. Keeps its leading zeros, so it stays text.
+        data_tests: [unique, not_null]
+      - name: campaign_name
+        description: Teaser name. Not unique, so never join on it.
+      - name: gender
+        description: Audience the teaser is aimed at.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [female, male, unisex, girls, boys, kids, babies]
+      - name: active_from
+        description: Campaign start, in UTC as stored by the CMS.
+      - name: active_to
+        description: Campaign end in UTC. Empty when the team left it blank.
+      - name: dwh_load_time
+        description: When this row was loaded into the warehouse by the model run.
+
+unit_tests:
+  - name: newest_copy_is_kept_and_deleted_campaign_survives
+    description: Two daily copies give one row per campaign, and a campaign missing from the newer copy stays.
+    model: prep_teasers_cms
+    given:
+      - input: source('raw', 'teasers_cms')
+        rows:
+          - {campaign_id: "000001", campaign_name: Old, gender: female, active_from: "2025-05-01T22:00:00", active_to: null, _snapshot_date: "2025-06-01"}
+          - {campaign_id: "000002", campaign_name: Live, gender: male, active_from: "2025-05-01T22:00:00", active_to: null, _snapshot_date: "2025-06-01"}
+          - {campaign_id: "000002", campaign_name: Live, gender: Male, active_from: "2025-05-01T22:00:00", active_to: null, _snapshot_date: "2025-06-02"}
+    expect:
+      rows:
+        - {campaign_id: "000001", gender: female}
+        - {campaign_id: "000002", gender: male}
