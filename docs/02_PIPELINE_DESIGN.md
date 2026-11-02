@@ -99,7 +99,7 @@ A CTR cannot be averaged. For any filter:
 Benchmark CTR = sum(impressions x benchmark) / sum(impressions that have a benchmark)
 ```
 
-So the table stores `expected_clicks` and `impressions_with_benchmark`, and the dashboard divides after filtering. Each number stays correct for any date range or device.
+So the table stores `expected_clicks` and `impressions_with_benchmark`, and the dashboard divides per campaign. This handles campaigns with several booked lines. Benchmarks are not blended across campaigns, because brands have different goals.
 
 **Why `impressions_with_benchmark`:** without it, campaigns lacking a benchmark would drag the result down as if their benchmark were zero.
 

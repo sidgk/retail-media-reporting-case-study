@@ -23,7 +23,7 @@ Stores counts, never rates. Use it like this for any filter:
 | CTR | `sum(clicks) / sum(impressions)` |
 | Benchmark CTR | `sum(expected_clicks) / sum(impressions_with_benchmark)` |
 
-Never average a CTR. `dbt/analyses/dashboard_query.sql` shows the full query.
+Never average a CTR, and read benchmark CTR per campaign. Brands have different goals, so a benchmark blended across campaigns has no business meaning. `dbt/analyses/dashboard_query.sql` shows the full query.
 
 **Why `target_gender` is on the fact:** for placements it can change by day as bookings start and stop. It describes the campaign's audience, not the viewer.
 
