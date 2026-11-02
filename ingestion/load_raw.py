@@ -3,10 +3,10 @@
 Every column stays STRING: raw means exactly what the source sent. Type detection would turn
 campaign_id 000329 into 329 and break the join to the CMS.
 
-- CMS and Salesforce are full daily copies, one partition per snapshot day. The CMS deletes old
-  campaigns, so these copies are the only history we will ever have.
+- CMS and Salesforce are stored as dated full copies, one partition per snapshot day. Both can be
+  edited, and the CMS deletes old campaigns, so these copies are our evidence of what was set and when.
 - Events load into one partition per event day.
-- Rerunning a date replaces its partition, never appends a second copy.
+- A file identical to what is already loaded is skipped, so a rerun or backfill never adds a copy.
 - Partitions are integer ranges on UNIX_DATE, because a BigQuery sandbox silently expires DATE
   partitions older than 60 days. Load jobs and query destinations are used instead of DML.
 
@@ -79,6 +79,15 @@ def load_landing(client, table, path, columns):
     return landing
 
 
+def fingerprint(client, table, columns, where):
+    """Row count plus an order-independent hash of the source columns."""
+    cols = ", ".join(columns)
+    row = run(client, f"""select count(*) as row_count,
+                                  bit_xor(farm_fingerprint(to_json_string(struct({cols})))) as row_hash
+                           from `{table}` where {where}""")[0]
+    return row.row_count, row.row_hash
+
+
 def load_snapshot(client, table, columns, source_dir, snapshot_date):
     day = (snapshot_date - date(1970, 1, 1)).days
     file_name = f"{table}.csv"
@@ -86,6 +95,11 @@ def load_snapshot(client, table, columns, source_dir, snapshot_date):
     create_table(client, table, columns,
                  ["_snapshot_date DATE", "_snapshot_day INT64", "_source_file STRING", "_loaded_at TIMESTAMP"],
                  "_snapshot_day")
+    newest = run(client, f"select max(_snapshot_day) as day from `{DATASET}.{table}`")[0].day
+    if newest is not None and fingerprint(client, landing, columns, "true") == fingerprint(
+            client, f"{client.project}.{DATASET}.{table}", columns, f"_snapshot_day = {newest}"):
+        print(f"skipped {table}, identical to the newest copy")
+        return
     run(client, f"""select *, date '{snapshot_date}' as _snapshot_date, {day} as _snapshot_day,
                            '{file_name}' as _source_file, current_timestamp() as _loaded_at
                     from `{landing}`""",
@@ -100,6 +114,10 @@ def load_events(client, source_dir):
                  ["event_day INT64", "_source_file STRING", "_loaded_at TIMESTAMP"], "event_day")
     day_sql = "unix_date(date(left(event_timestamp, 10)))"
     for row in run(client, f"select distinct {day_sql} as day from `{landing}` order by 1"):
+        if fingerprint(client, landing, EVENT_COLUMNS, f"{day_sql} = {row.day}") == fingerprint(
+                client, f"{client.project}.{DATASET}.{EVENT_SOURCE}", EVENT_COLUMNS, f"event_day = {row.day}"):
+            print(f"skipped {EVENT_SOURCE}, partition {row.day} is identical")
+            continue
         run(client, f"""select *, {day_sql} as event_day, '{file_name}' as _source_file,
                                current_timestamp() as _loaded_at
                         from `{landing}` where {day_sql} = {row.day}""",

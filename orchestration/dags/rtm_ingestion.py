@@ -3,6 +3,8 @@
 Kept separate because loading depends on outside systems, so a late source never blocks a rerun of
 the models. The logical date ({{ ds }}) is the day being processed.
 """
+import os
+
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
@@ -13,7 +15,8 @@ from rtm_common import DBT, DEFAULT_ARGS, PROJECT, PYTHON, ROOT, START_DATE
 with DAG(
     dag_id="rtm_ingestion",
     description="Load the three sources and the brand seed",
-    schedule="0 12 * * *",
+    # Runs only when triggered locally. Production sets RTM_SCHEDULE, for example "0 12 * * *".
+    schedule=os.environ.get("RTM_SCHEDULE"),
     start_date=START_DATE,
     catchup=False,
     max_active_runs=1,

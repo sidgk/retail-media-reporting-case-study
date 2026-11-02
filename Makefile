@@ -2,7 +2,7 @@
 -include .env
 DBT := cd dbt && $(HOME)/.venvs/dbt/bin/dbt
 
-.PHONY: help load seed parse model test build airflow airflow-init
+.PHONY: help load seed parse model test build airflow airflow-init demo
 
 help:
 	@grep -E '^[a-z-]+:.*##' Makefile | sed -E 's/:.*## /\t/'
@@ -24,6 +24,9 @@ test: ## Run every test against your models
 
 build: ## Rebuild and test everything
 	$(DBT) build
+
+demo: ## Run all three DAGs for 7 June, safe to repeat because unchanged data is skipped
+	bash -c 'source orchestration/env.sh && for d in rtm_ingestion rtm_dbt_models rtm_dbt_tests; do airflow dags unpause $$d; done && airflow dags trigger rtm_ingestion -e "2025-06-08T$$(date +%H:%M:%S)+00:00"'
 
 airflow-init: ## First-time Airflow setup
 	bash -c 'source orchestration/env.sh && airflow db migrate'

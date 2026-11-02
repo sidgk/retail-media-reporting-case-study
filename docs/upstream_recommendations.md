@@ -20,3 +20,8 @@ Number 1 removes most of the complexity in this project.
 - Record an event id in tracking, so deduplication stops relying on a hash.
 - Confirm how much traffic is lost to cookie consent.
 - Agree whether brands are billed on GA4, an ad server or the booking.
+
+## From CTR to ROI
+
+Brands need ROI, but the requested KPIs stop at CTR. Getting there needs order data, a brand id on every campaign and an agreed spend definition. The hard parts are the attribution window, net revenue after returns, consent, and shoppers who would have bought anyway, which only holdout tests can measure.
+

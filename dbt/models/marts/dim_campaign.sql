@@ -70,9 +70,9 @@ all_campaigns as (
 
 select
     all_campaigns.*,
-    -- There is no brand column in any source, so it comes from the first word of the name, checked
-    -- against a fixed list. Season-only names such as "Fall Launch" have no brand, and must not get one.
+    -- There is no brand column in any source, so it comes from the first word of the name, mapped
+    -- through a fixed list, so CK and Calvin are both Calvin Klein. Season-only names such as "Fall Launch" have no brand, and must not get one.
     coalesce(brands.brand, 'no_brand') as brand
 from all_campaigns
 left join {{ ref('brand_list') }} as brands
-    on split(all_campaigns.campaign_name, ' ')[safe_offset(0)] = brands.brand
+    on split(all_campaigns.campaign_name, ' ')[safe_offset(0)] = brands.first_word

@@ -168,7 +168,7 @@ Tables live once, in `rtm_raw`, `rtm_prep`, `rtm_int`, `rtm_marts`, `rtm_seeds` 
 | Scenario | Handling | Status |
 |---|---|---|
 | Event arrives within 3 days | Next run rebuilds that day | **[Tested]** +5 impressions, +2 clicks exactly |
-| Same run repeated | Partition replaced, no doubling | **[Tested]** |
+| Same run repeated | Unchanged files are skipped, and rebuilt partitions replace old ones | **[Tested]** |
 | Event arrives after the window | Not picked up automatically | **[Tested]** Then backfill below |
 | Campaign metadata arrives after events | Fact rebuilds daily, row self-heals. Until then `outside_campaign_dates` | Design |
 | New campaign appears in tracking first | `is_inferred` row in `dim_campaign` | Design |
@@ -242,7 +242,7 @@ Tests run after all models, so a failed test alerts the team but does not stop a
 
 The third only appeared on a real scheduler run, because `airflow dags test` does not fork. That is why the pipeline was tested both ways.
 
-**The DAG is left paused.** When unpaused, Airflow creates a run for the latest interval, which waits for data that does not exist here.
+**Runs are triggered.** `rtm_ingestion` has no schedule locally. Production sets `RTM_SCHEDULE`. Identical files are skipped, so a repeated run adds no copy.
 
 ## The BigQuery sandbox
 

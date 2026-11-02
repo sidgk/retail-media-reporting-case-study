@@ -32,6 +32,10 @@ Coverage: 32 data tests and 3 unit tests, each guarding a real failure. Failed r
 | CMS deletes a campaign | Old events lose gender and dates | Daily copy keeps the last known version |
 | Sheet is updated late | Temporary mismatch | Fact rebuilds daily, so rows heal by themselves |
 
+## Snapshots as evidence
+
+The Retail Media team can change the Google Sheet and the CMS at any time, and neither keeps a usable history. So raw stores a dated full copy whenever a source changes. If a campaign under-delivers, or a brand disputes a number, we can see exactly what was booked and when it changed: the audience, dates, reach, CPM or benchmark in place at the time. A wrongly set parameter becomes visible, and any past state can be replayed.
+
 ## Operating model
 
 - **Ownership:** every source and mart has a named owner, and every alert goes to one owner.

@@ -8,13 +8,13 @@ Built on BigQuery, dbt Core and Airflow.
 
 | Goal | Where |
 |---|---|
-| Pipeline design | [docs/02_PIPELINE_DESIGN.md](docs/02_PIPELINE_DESIGN.md) |
-| SQL for the data model | [dbt/models](dbt/models), [docs/05_MODEL_GUIDE.md](docs/05_MODEL_GUIDE.md) |
-| Governance and monitoring | [docs/03_GOVERNANCE_AND_MONITORING.md](docs/03_GOVERNANCE_AND_MONITORING.md) |
-| Assumptions | [ASSUMPTIONS.md](ASSUMPTIONS.md) |
-| Upstream recommendations | [docs/07_UPSTREAM_RECOMMENDATIONS.md](docs/07_UPSTREAM_RECOMMENDATIONS.md) |
-| Backfill and late data | [docs/02_PIPELINE_DESIGN.md](docs/02_PIPELINE_DESIGN.md) |
-| Manual sources | [docs/03_GOVERNANCE_AND_MONITORING.md](docs/03_GOVERNANCE_AND_MONITORING.md) |
+| Pipeline design | [docs/pipeline_design.md](docs/pipeline_design.md) |
+| SQL for the data model | [dbt/models](dbt/models), with a README in each layer |
+| Governance and monitoring | [docs/governance_and_monitoring.md](docs/governance_and_monitoring.md) |
+| Assumptions and questions | [ASSUMPTIONS.md](ASSUMPTIONS.md) |
+| Upstream recommendations | [docs/upstream_recommendations.md](docs/upstream_recommendations.md) |
+| Backfill and late data | [docs/pipeline_design.md](docs/pipeline_design.md) |
+| Manual sources | [docs/governance_and_monitoring.md](docs/governance_and_monitoring.md) |
 
 ## Project layout
 
@@ -47,6 +47,7 @@ make load
 make seed
 make build
 make test
+make demo
 ```
 
-`make airflow` starts Airflow locally. To run one layer, use a dbt tag, for example `dbt build --select tag:prep`. Tags: `prep`, `intermediate`, `marts`, `dim`, `fact`, `daily`. Airflow has three DAGs: `rtm_ingestion`, `rtm_dbt_models` and `rtm_dbt_tests`. The project was developed on a BigQuery sandbox, whose limits are listed in the pipeline design.
+`make airflow` starts Airflow locally, and `make demo` then runs all three DAGs. To run one layer, use a dbt tag, for example `dbt build --select tag:prep`. Tags: `prep`, `intermediate`, `marts`, `dim`, `fact`, `daily`. Airflow has three DAGs: `rtm_ingestion`, `rtm_dbt_models` and `rtm_dbt_tests`. The project was developed on a BigQuery sandbox, whose limits are listed in the pipeline design.
