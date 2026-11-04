@@ -29,7 +29,7 @@ models:
       - name: country_cluster
         description: Region as typed. Mixes clusters, country codes and digits 1 to 5 of unknown meaning.
       - name: reach
-        description: "ASSUMPTION: booked impressions. To be confirmed with the Retail Media team."
+        description: "The maximum number of impressions the platform promises to serve on this line."
       - name: currency_cpm
         description: Currency of the CPM.
       - name: cpm
